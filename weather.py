@@ -27,7 +27,7 @@ def fetch_weather() -> dict:
     params = {
         "location": f"{LAT},{LON}",
         "apikey": API_KEY,
-        "units": "imperial"  # Use "metric" for Celsius
+        "units": "imperial"
     }
     
     response = requests.get(URL, params=params)
@@ -54,7 +54,7 @@ def write_to_motherduck(data: dict) -> pa.Table:
     """Write the PyArrow table to a MotherDuck database."""
     con = duckdb.connect(MOTHERDUCK_CONN)
 
-    # in prod, should type datasets 
+    # In prod, add types to datasets 
     con.sql('CREATE TABLE IF NOT EXISTS weather as SELECT * FROM arrow_table')
 
     # Append new data into the table if already exist
@@ -68,12 +68,3 @@ def fetch_weather_data():
     """Prefect flow to fetch, process, and store weather data with timestamps."""
     weather_data = fetch_weather()
     write_to_motherduck(weather_data)
-
-if __name__ == "__main__":
-    fetch_weather_data.deploy(
-        name="philly-weather",
-        work_pool_name="Test",
-        image="weather-pull:dev",
-        push=False,
-        cron='50 * * * *',
-    )
