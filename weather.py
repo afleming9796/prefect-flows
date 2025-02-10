@@ -41,15 +41,22 @@ def fetch_weather() -> dict:
 @task
 def write_to_motherduck(data: dict) -> pa.Table:
     """Convert JSON weather data to a PyArrow Table with timestamp."""
-    columns = list(data.keys())
-    values = [data[key] for key in columns]
-
+    columns = [
+        "cloudBase", "cloudCeiling", "cloudCover", "dewPoint", "freezingRainIntensity",
+        "hailProbability", "hailSize", "humidity", "precipitationProbability", "pressureSurfaceLevel",
+        "rainIntensity", "sleetIntensity", "snowIntensity", "temperature", "temperatureApparent",
+        "uvHealthConcern", "uvIndex", "visibility", "weatherCode", "windDirection",
+        "windGust", "windSpeed", "recorded_at"
+    ]
+    
+    # Filter data to include only the specified columns
+    filtered_data = {key: data.get(key, None) for key in columns[:-1]}
+    
     # Add a timestamp column (use local time)
     timestamp = datetime.datetime.now().isoformat()
-    columns.append("recorded_at")
-    values.append(timestamp)
+    filtered_data["recorded_at"] = timestamp
 
-    arrow_table = pa.table({col: [val] for col, val in zip(columns, values)})
+    arrow_table = pa.table({col: [filtered_data[col]] for col in columns})
 
     """Write the PyArrow table to a MotherDuck database."""
     con = duckdb.connect(MOTHERDUCK_CONN)
